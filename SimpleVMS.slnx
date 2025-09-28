@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="lib/Core/Core.csproj" Id="adca8c11-0ba7-4ebd-9988-ec16b672e390" />
+  <Project Path="lib/Domain/Domain.csproj" Id="bb84818b-0964-4f5b-afb4-3c6f6f622faf" />
+  <Project Path="lib/Infrastructure/Infrastructure.csproj" />
+  <Project Path="src/SimpleVMS.csproj" />
+</Solution>
