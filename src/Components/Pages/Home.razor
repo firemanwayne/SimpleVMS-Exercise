@@ -1,0 +1,167 @@
+﻿@page "/"
+@using Dapper
+@using System.Data
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Timesheets</PageTitle>
+
+<h1 style="display: flex; flex-direction:column; align-items:center">Simple VMS - Stored Procedure Exercise</h1>
+
+<div style="display: flex; flex-direction:column; align-items:center">
+	<label>Start</label>
+	<input type="datetime" @bind="_start" />
+
+	<label>End</label>
+	<input type="datetime" @bind="_end" />
+</div>
+
+<h3 style="display: flex; flex-direction:column; align-items:center">Timesheets</h3>
+
+<div style="display: flex; flex-direction:column; align-items:center; justify-content:center">
+	<table>
+		<thead>
+			<tr>
+				<th style="text-align:center;">Start Date</th>
+				<th style="text-align:center;">Hour 1</th>
+				<th style="text-align:center;">Hour 2</th>
+				<th style="text-align:center;">Hour 3</th>
+				<th style="text-align:center;">Hour 4</th>
+				<th style="text-align:center;">Hour 5</th>
+				<th style="text-align:center;">Hour 6</th>
+				<th style="text-align:center;">Hour 7</th>
+				<th style="text-align:center;">Buyer</th>
+				<th style="text-align:center;">Worker</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in _timesheets.OrderBy(a => a.PeriodStartDate).ToList())
+			{
+				@if (item is not null && item.Worker is not null)
+				{
+					<tr @onclick="@(() => LoadTimesheetsByDateRangeAsync(item.Worker.BuyerId, _start, _end))">
+						<td style="text-align:center;">@item.PeriodStartDate.ToShortDateString()</td>
+						<td style="text-align:center;">@item.Hours1</td>
+						<td style="text-align:center;">@item.Hours2</td>
+						<td style="text-align:center;">@item.Hours3</td>
+						<td style="text-align:center;">@item.Hours4</td>
+						<td style="text-align:center;">@item.Hours5</td>
+						<td style="text-align:center;">@item.Hours6</td>
+						<td style="text-align:center;">@item.Hours7</td>
+						<td style="text-align:center;">
+							@item.Worker?.Buyer?.Name
+						</td>
+						<td style="text-align:center;">@item.Worker?.WorkerId</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+</div>
+
+<h3 style="display: flex; flex-direction:column; align-items:center">Hours Worked</h3>
+
+<div style="display: flex; flex-direction:column; align-items:center; justify-content:center">
+	<table>
+		<thead>
+			<tr>
+				<th style="text-align:center;">Name</th>
+				<th style="text-align:center;">Date</th>
+				<th style="text-align:center;">Hours</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in _hoursWorked.OrderBy(a => a.WorkDate).ToList())
+			{
+				<tr>
+					<td style="text-align:center;">@item.FullName</td>
+					<td style="text-align:center;">@(DateTime.Parse(item.WorkDate).ToShortDateString())</td>
+					<td style="text-align:center;">@item.HoursWorked</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@code {
+	bool _isLoading;
+	DateTime _start = DateTime.UtcNow;
+	DateTime _end = DateTime.UtcNow;
+
+	HashSet<Timesheet> _timesheets = [];
+	HashSet<Buyer> _buyers = [];
+	IEnumerable<WorkerTime> _hoursWorked = [];
+
+	[Inject] IRepository<Timesheet> _repo { get; set; } = default!;
+
+	[Inject] IRepository<Buyer> _buyerRepo { get; set; } = default!;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			if (!_isLoading)
+			{
+				await LoadDataAsync();
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex.ToString());
+		}
+
+		await base.OnInitializedAsync();
+	}
+
+	async Task LoadDataAsync()
+	{
+		_isLoading = true;
+
+		await LoadTimeSheetsAsync();
+
+		_isLoading = false;
+	}
+
+	async Task LoadTimeSheetsAsync()
+	{
+		_timesheets.Clear();
+
+		var query = _repo
+		.GetAllAsync()
+		.Include(a => a.Worker)
+		.ThenInclude(b => b.Buyer)
+		.ToListAsync();
+
+		foreach (var item in await query)
+		{
+			_timesheets.Add(item);
+		}
+	}
+
+	async Task LoadTimesheetsByDateRangeAsync(long buyerId, DateTime start, DateTime end)
+	{
+		_hoursWorked = [];
+
+		const string storedProcedure = "GetTimesheetsByBuyerIDForDateRange";
+
+		var values = new
+		{
+			BuyerID = buyerId,
+			StartDate = start,
+			EndDate = end
+		};
+
+		var connection = _repo.GetConnection();
+
+		var results = await connection
+		.QueryAsync<WorkerTime>(storedProcedure, values, commandType: CommandType.StoredProcedure);
+
+		_hoursWorked = results ?? [];
+	}
+
+	class WorkerTime
+	{
+		public string FullName { get; set; } = string.Empty;
+		public string WorkDate { get; set; } = string.Empty;
+		public decimal HoursWorked { get; set; }
+	}
+}
