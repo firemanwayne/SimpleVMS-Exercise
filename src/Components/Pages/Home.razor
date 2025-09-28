@@ -5,85 +5,122 @@
 
 <PageTitle>Timesheets</PageTitle>
 
-<h1 style="display: flex; flex-direction:column; align-items:center">Simple VMS - Stored Procedure Exercise</h1>
+<div style="width:100vw;height:100vh;">
+	<h1 style="display: flex; flex-direction:column; align-items:center;text-align:center;">Simple VMS - Stored Procedure Exercise</h1>
 
-<div style="display: flex; flex-direction:column; align-items:center">
-	<label>Start</label>
-	<input type="datetime" @bind="_start" />
+	<div style="display: flex; flex-direction:row; align-items:center; justify-content:center;gap:0 20px;">
+		<span>
+			<label>Start</label>
+			<input style="width:100%" type="date" @bind="_start" />
+		</span>
 
-	<label>End</label>
-	<input type="datetime" @bind="_end" />
-</div>
+		<span>
+			<label>End</label>
+			<input style="width:100%" type="date" @bind="_end" />
+		</span>
+	</div>
 
-<h3 style="display: flex; flex-direction:column; align-items:center">Timesheets</h3>
+	<h3 style="display: flex; flex-direction:column; align-items:center; text-align:center;" @onclick="ToggleBuyers">Buyers @(_showBuyers ? "<" : ">")</h3>
 
-<div style="display: flex; flex-direction:column; align-items:center; justify-content:center">
-	<table>
-		<thead>
-			<tr>
-				<th style="text-align:center;">Start Date</th>
-				<th style="text-align:center;">Hour 1</th>
-				<th style="text-align:center;">Hour 2</th>
-				<th style="text-align:center;">Hour 3</th>
-				<th style="text-align:center;">Hour 4</th>
-				<th style="text-align:center;">Hour 5</th>
-				<th style="text-align:center;">Hour 6</th>
-				<th style="text-align:center;">Hour 7</th>
-				<th style="text-align:center;">Buyer</th>
-				<th style="text-align:center;">Worker</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var item in _timesheets.OrderBy(a => a.PeriodStartDate).ToList())
-			{
-				@if (item is not null && item.Worker is not null)
-				{
-					<tr @onclick="@(() => LoadTimesheetsByDateRangeAsync(item.Worker.BuyerId, _start, _end))">
-						<td style="text-align:center;">@item.PeriodStartDate.ToShortDateString()</td>
-						<td style="text-align:center;">@item.Hours1</td>
-						<td style="text-align:center;">@item.Hours2</td>
-						<td style="text-align:center;">@item.Hours3</td>
-						<td style="text-align:center;">@item.Hours4</td>
-						<td style="text-align:center;">@item.Hours5</td>
-						<td style="text-align:center;">@item.Hours6</td>
-						<td style="text-align:center;">@item.Hours7</td>
-						<td style="text-align:center;">
-							@item.Worker?.Buyer?.Name
-						</td>
-						<td style="text-align:center;">@item.Worker?.WorkerId</td>
+	@if (_showBuyers)
+	{
+		<div style="display: flex; flex-direction:column; align-items:center; justify-content:center;max-height:600px;overflow-y:auto;">
+			<table style="width:700px">
+				<thead>
+					<tr>
+						<th style="text-align:center;">Name</th>
 					</tr>
-				}
-			}
-		</tbody>
-	</table>
-</div>
+				</thead>
+				<tbody>
+					@foreach (var item in _buyers.OrderBy(a => a.Name).ToList())
+					{
+						<tr @onclick="@(() => LoadTimesheetsByDateRangeAsync(item.BuyerId, _start, _end))">
+							<td style="text-align:center;">@item.Name</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
 
-<h3 style="display: flex; flex-direction:column; align-items:center">Hours Worked</h3>
+	<h3 style="display: flex; flex-direction:column; align-items:center" @onclick="ToggleTimesheets">Timesheets @(_showTimesheets ? "<" : ">")</h3>
 
-<div style="display: flex; flex-direction:column; align-items:center; justify-content:center">
-	<table>
-		<thead>
-			<tr>
-				<th style="text-align:center;">Name</th>
-				<th style="text-align:center;">Date</th>
-				<th style="text-align:center;">Hours</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var item in _hoursWorked.OrderBy(a => a.WorkDate).ToList())
-			{
-				<tr>
-					<td style="text-align:center;">@item.FullName</td>
-					<td style="text-align:center;">@(DateTime.Parse(item.WorkDate).ToShortDateString())</td>
-					<td style="text-align:center;">@item.HoursWorked</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+	@if (_showTimesheets)
+	{
+		<div style="display: flex; flex-direction:column; align-items:center;max-height:800px;overflow-y:auto;">
+			<table style="width:700px">
+				<thead>
+					<tr>
+						<th style="text-align:center;">Start Date</th>
+						<th style="text-align:center;">Hour 1</th>
+						<th style="text-align:center;">Hour 2</th>
+						<th style="text-align:center;">Hour 3</th>
+						<th style="text-align:center;">Hour 4</th>
+						<th style="text-align:center;">Hour 5</th>
+						<th style="text-align:center;">Hour 6</th>
+						<th style="text-align:center;">Hour 7</th>
+						<th style="text-align:center;">Buyer</th>
+						<th style="text-align:center;">Worker</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var item in _timesheets.OrderBy(a => a.PeriodStartDate).ToList())
+					{
+						@if (item is not null && item.Worker is not null)
+						{
+							<tr @onclick="@(() => LoadTimesheetsByDateRangeAsync(item.Worker.BuyerId, _start, _end))">
+								<td style="text-align:center;" title="@($"{item.PeriodStartDate.DayOfWeek}")">@item.PeriodStartDate.ToShortDateString()</td>
+								<td style="text-align:center;">@item.Hours1</td>
+								<td style="text-align:center;">@item.Hours2</td>
+								<td style="text-align:center;">@item.Hours3</td>
+								<td style="text-align:center;">@item.Hours4</td>
+								<td style="text-align:center;">@item.Hours5</td>
+								<td style="text-align:center;">@item.Hours6</td>
+								<td style="text-align:center;">@item.Hours7</td>
+								<td style="text-align:center;">
+									@item.Worker?.Buyer?.Name
+								</td>
+								<td style="text-align:center;">@item.Worker?.WorkerId</td>
+							</tr>
+						}
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+
+	@if (_hoursWorked.Any())
+	{
+		<div style="display: flex; flex-direction:column; align-items:center; justify-content:center; max-height:600px;overflow-y:auto;">
+			<h3>Hours Worked @(_hoursWorked.Any() ? "<" : ">")</h3>
+			<table style="width:700px">
+				<thead>
+					<tr>
+						<th style="text-align:center;">Name</th>
+						<th style="text-align:center;">Date</th>
+						<th style="text-align:center;">Hours</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var item in _hoursWorked.OrderBy(a => a.WorkDate).ToList())
+					{
+						<tr>
+							<td style="text-align:center;">@item.FullName</td>
+							<td style="text-align:center;" title="@(DateTime.Parse(item.WorkDate).DayOfWeek)">@(DateTime.Parse(item.WorkDate).ToShortDateString())</td>
+							<td style="text-align:center;">@item.HoursWorked</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+
 </div>
 
 @code {
 	bool _isLoading;
+	bool _showBuyers;
+	bool _showTimesheets;
 	DateTime _start = DateTime.UtcNow;
 	DateTime _end = DateTime.UtcNow;
 
@@ -94,32 +131,6 @@
 	[Inject] IRepository<Timesheet> _repo { get; set; } = default!;
 
 	[Inject] IRepository<Buyer> _buyerRepo { get; set; } = default!;
-
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			if (!_isLoading)
-			{
-				await LoadDataAsync();
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine(ex.ToString());
-		}
-
-		await base.OnInitializedAsync();
-	}
-
-	async Task LoadDataAsync()
-	{
-		_isLoading = true;
-
-		await LoadTimeSheetsAsync();
-
-		_isLoading = false;
-	}
 
 	async Task LoadTimeSheetsAsync()
 	{
@@ -137,13 +148,25 @@
 		}
 	}
 
+	async Task LoadBuyersAsync()
+	{
+		_buyers.Clear();
+
+		var query = _buyerRepo
+		.GetAllAsync()
+		.OrderBy(a => a.Name);
+
+		foreach (var item in await query.ToListAsync())
+		{
+			_buyers.Add(item);
+		}
+	}
+
 	async Task LoadTimesheetsByDateRangeAsync(long buyerId, DateTime start, DateTime end)
 	{
 		_hoursWorked = [];
 
-		const string storedProcedure = "GetTimesheetsByBuyerIDForDateRange";
-
-		var values = new
+		TimesheetsByBuyerWithDateRangeQuery query = new()
 		{
 			BuyerID = buyerId,
 			StartDate = start,
@@ -153,9 +176,55 @@
 		var connection = _repo.GetConnection();
 
 		var results = await connection
-		.QueryAsync<WorkerTime>(storedProcedure, values, commandType: CommandType.StoredProcedure);
+		.QueryAsync<WorkerTime>(
+			sql: TimesheetsByBuyerWithDateRangeQuery.StoredProcedure,
+			param: query,
+			commandType: CommandType.StoredProcedure);
 
 		_hoursWorked = results ?? [];
+	}
+
+	async Task ToggleBuyers()
+	{
+		try
+		{
+			_showBuyers = !_showBuyers;
+
+			if (_showBuyers)
+			{
+				await LoadBuyersAsync();
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex.ToString());
+		}
+	}
+
+	async Task ToggleTimesheets()
+	{
+		try
+		{
+			_showTimesheets = !_showTimesheets;
+
+			if (_showTimesheets)
+			{
+				await LoadTimeSheetsAsync();
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex.ToString());
+		}
+	}
+
+	record TimesheetsByBuyerWithDateRangeQuery
+	{
+		public const string StoredProcedure = "GetTimesheetsByBuyerIDForDateRange";
+
+		public required long BuyerID { get; init; }
+		public required DateTime StartDate { get; init; }
+		public required DateTime EndDate { get; init; }
 	}
 
 	class WorkerTime
