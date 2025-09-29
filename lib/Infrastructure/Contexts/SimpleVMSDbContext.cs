@@ -1,6 +1,8 @@
 ﻿namespace Infrastructure.Contexts;
 
 using Domain.Models;
+using Domain.Models.TimesheetAggregate;
+using Domain.Models.WorkerAggregate;
 
 using Microsoft.EntityFrameworkCore;
 

@@ -1,6 +1,8 @@
-﻿namespace Domain.Models;
+﻿namespace Domain.Models.TimesheetAggregate;
 
 using Core.Abstractions;
+
+using Domain.Models.WorkerAggregate;
 
 using System.ComponentModel.DataAnnotations.Schema;
 

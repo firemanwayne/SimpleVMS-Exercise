@@ -1,7 +1,4 @@
 ﻿@page "/"
-@using Dapper
-@using System.Data
-@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Timesheets</PageTitle>
 
@@ -126,7 +123,7 @@
 
 	HashSet<Timesheet> _timesheets = [];
 	HashSet<Buyer> _buyers = [];
-	IEnumerable<WorkerTime> _hoursWorked = [];
+	IEnumerable<HoursWorkedDto> _hoursWorked = [];
 
 	[Inject] IRepository<Timesheet> _repo { get; set; } = default!;
 
@@ -176,7 +173,7 @@
 		var connection = _repo.GetConnection();
 
 		var results = await connection
-		.QueryAsync<WorkerTime>(
+		.QueryAsync<HoursWorkedDto>(
 			sql: TimesheetsByBuyerWithDateRangeQuery.StoredProcedure,
 			param: query,
 			commandType: CommandType.StoredProcedure);
@@ -216,21 +213,5 @@
 		{
 			Console.WriteLine(ex.ToString());
 		}
-	}
-
-	record TimesheetsByBuyerWithDateRangeQuery
-	{
-		public const string StoredProcedure = "GetTimesheetsByBuyerIDForDateRange";
-
-		public required long BuyerID { get; init; }
-		public required DateTime StartDate { get; init; }
-		public required DateTime EndDate { get; init; }
-	}
-
-	class WorkerTime
-	{
-		public string FullName { get; set; } = string.Empty;
-		public string WorkDate { get; set; } = string.Empty;
-		public decimal HoursWorked { get; set; }
-	}
+	}	
 }
